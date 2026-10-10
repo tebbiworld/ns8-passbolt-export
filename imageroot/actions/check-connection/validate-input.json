@@ -1,0 +1,13 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "check-connection",
+    "$id": "http://nethserver.org/json-schema/task/input/passbolt-export/check-connection",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "repin": {
+            "type": "boolean",
+            "title": "Forget the pinned server key and pin the current one"
+        }
+    }
+}

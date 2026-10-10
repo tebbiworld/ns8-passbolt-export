@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Apply the schedule: timer drop-in with the OnCalendar expression, timer
+# enabled only when scheduling is on and a target is configured.
+
+import pbx
+
+pbx.apply_schedule()

@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# "Export now" button: the same run as the schedule. The output carries only
+# the run record (counts, file name, checksum), never a secret.
+
+import json
+import sys
+
+import agent
+import pbx
+
+agent.set_progress(5)
+record = pbx.export("manual")
+agent.set_progress(100)
+if not record["ok"]:
+    print(agent.SD_ERR + "export failed: %s" % record.get("error"), file=sys.stderr)
+    json.dump(record, fp=sys.stdout)
+    sys.exit(1)
+json.dump(record, fp=sys.stdout)

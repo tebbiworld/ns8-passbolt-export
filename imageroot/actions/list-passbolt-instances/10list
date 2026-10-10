@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Passbolt instances of the cluster with their public address, offered as a
+# choice in the settings page. Uses the reader role on passbolt modules
+# (org.nethserver.authorizations=passbolt@any:reader) to call their
+# get-configuration action; an instance that does not answer is skipped.
+
+import json
+import re
+import sys
+
+import agent
+import agent.tasks
+
+rdb = agent.redis_connect()
+found = []
+for key in rdb.scan_iter(match="module/*/environment", count=200):
+    image = rdb.hget(key, "IMAGE_URL") or ""
+    if not re.search(r"/passbolt:[^/]*$", image):
+        continue
+    module_id = key.split("/")[1]
+    try:
+        response = agent.tasks.run(agent_id=f"module/{module_id}", action="get-configuration", data={})
+    except Exception as exc:
+        print(agent.SD_WARNING + f"{module_id}: {type(exc).__name__}", file=sys.stderr)
+        continue
+    host = (response.get("output") or {}).get("host", "") if response.get("exit_code") == 0 else ""
+    if host and re.match(r"^[A-Za-z0-9.-]{1,253}$", host):
+        found.append({"module_id": module_id, "url": f"https://{host}"})
+    else:
+        print(agent.SD_WARNING + f"{module_id}: no host name configured or not readable", file=sys.stderr)
+
+json.dump({"instances": sorted(found, key=lambda i: i["module_id"])}, fp=sys.stdout)

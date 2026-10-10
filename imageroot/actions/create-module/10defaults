@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Defaults of a fresh instance. Nothing runs until the Passbolt account, the
+# KeePass password and an upload target are set in the settings page.
+
+import agent
+
+agent.mset_env({
+    "PASSBOLT_URL": "",
+    "PASSBOLT_CA_B64": "",
+    "PASSBOLT_USER": "",
+    "KEYFILE_ENABLED": "false",
+    "TARGET_TYPE": "",
+    "TARGET_PATH": "Passbolt",
+    "FILE_PREFIX": "passbolt-export",
+    "RETENTION": "12",
+    "SCHEDULE_ENABLED": "true",
+    "SCHEDULE_FREQUENCY": "weekly",
+    "SCHEDULE_WEEKDAY": "Sun",
+    "SCHEDULE_MONTHDAY": "1",
+    "SCHEDULE_TIME": "03:30",
+    "NOTIFY_EMAIL": "",
+    "NOTIFY_FROM": "",
+    "NOTIFY_MODE": "always",
+    "MAIL_LANGUAGE": "en",
+})

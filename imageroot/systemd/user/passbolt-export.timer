@@ -1,0 +1,18 @@
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# The OnCalendar= value comes from the settings page: configure-module writes
+# it to passbolt-export.timer.d/schedule.conf. The value below is only the
+# fallback (weekly). Persistent= catches up a run missed while the node was off.
+
+[Unit]
+Description=Passbolt export schedule
+
+[Timer]
+OnCalendar=Sun *-*-* 03:30:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

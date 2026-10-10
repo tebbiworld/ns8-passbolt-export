@@ -1,0 +1,293 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Configure passbolt-export",
+    "$id": "http://nethserver.org/json-schema/task/input/passbolt-export/configure-module",
+    "description": "Passbolt account, KeePass protection, upload target, schedule and report mail. Secret fields left empty keep the stored value.",
+    "examples": [
+        {
+            "passbolt_url": "https://passbolt.example.com",
+            "passbolt_ca_pem": "",
+            "passbolt_private_key": "",
+            "passbolt_key_password": "",
+            "passbolt_totp_secret": "",
+            "clear_totp_secret": false,
+            "kdbx_password": "",
+            "keyfile_enabled": false,
+            "kdbx_keyfile_secret": "",
+            "target_type": "dropbox",
+            "target_path": "Passbolt",
+            "target_token": "",
+            "pcloud_hostname": "",
+            "s3_provider": "",
+            "s3_endpoint": "",
+            "s3_region": "",
+            "s3_access_key": "",
+            "s3_secret_access_key": "",
+            "webdav_url": "",
+            "webdav_vendor": "",
+            "smb_host": "",
+            "smb_domain": "",
+            "target_user": "",
+            "target_password": "",
+            "file_prefix": "passbolt-export",
+            "retention": 12,
+            "schedule_enabled": true,
+            "schedule_frequency": "weekly",
+            "schedule_weekday": "Sun",
+            "schedule_monthday": 1,
+            "schedule_time": "03:30",
+            "notify_email": "admin@example.com",
+            "notify_from": "",
+            "notify_mode": "always",
+            "mail_language": "en"
+        }
+    ],
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "passbolt_url",
+        "target_type",
+        "target_path",
+        "file_prefix",
+        "retention",
+        "schedule_enabled",
+        "schedule_frequency",
+        "schedule_weekday",
+        "schedule_monthday",
+        "schedule_time",
+        "notify_mode",
+        "mail_language"
+    ],
+    "properties": {
+        "passbolt_url": {
+            "type": "string",
+            "title": "Passbolt address (https://...)",
+            "maxLength": 253
+        },
+        "passbolt_ca_pem": {
+            "type": "string",
+            "title": "CA certificate (PEM) for a private Passbolt certificate, optional",
+            "maxLength": 20000
+        },
+        "passbolt_private_key": {
+            "type": "string",
+            "title": "Private OpenPGP key of the export account (ASCII armored). Empty = keep",
+            "maxLength": 65536
+        },
+        "passbolt_key_password": {
+            "type": "string",
+            "title": "Passphrase of the private key. Empty = keep",
+            "maxLength": 1024
+        },
+        "passbolt_totp_secret": {
+            "type": "string",
+            "title": "TOTP secret of the export account (base32). Empty = keep",
+            "maxLength": 256
+        },
+        "clear_totp_secret": {
+            "type": "boolean",
+            "title": "Remove the stored TOTP secret"
+        },
+        "kdbx_password": {
+            "type": "string",
+            "title": "Password of the KeePass file (min. 12 characters). Empty = keep",
+            "maxLength": 1024
+        },
+        "keyfile_enabled": {
+            "type": "boolean",
+            "title": "Protect the KeePass file with a key file as well"
+        },
+        "kdbx_keyfile_secret": {
+            "type": "string",
+            "title": "KeePass 2.0 XML key file generated in the browser. Empty = keep",
+            "maxLength": 2048
+        },
+        "target_type": {
+            "type": "string",
+            "title": "Upload target",
+            "enum": [
+                "",
+                "dropbox",
+                "onedrive",
+                "drive",
+                "pcloud",
+                "s3",
+                "webdav",
+                "smb"
+            ]
+        },
+        "target_path": {
+            "type": "string",
+            "title": "Folder on the target (for S3: bucket/folder, for SMB: share/folder)",
+            "maxLength": 200
+        },
+        "target_token": {
+            "type": "string",
+            "title": "OAuth token printed by rclone authorize. Empty = keep",
+            "maxLength": 8192
+        },
+        "pcloud_hostname": {
+            "type": "string",
+            "title": "pCloud API host",
+            "enum": [
+                "",
+                "api.pcloud.com",
+                "eapi.pcloud.com"
+            ]
+        },
+        "s3_provider": {
+            "type": "string",
+            "title": "S3 provider",
+            "enum": [
+                "",
+                "Other",
+                "AWS",
+                "Minio",
+                "Ceph",
+                "Cloudflare",
+                "Hetzner",
+                "IDrive",
+                "IONOS",
+                "OVHcloud",
+                "Scaleway",
+                "Storj",
+                "Synology",
+                "Wasabi"
+            ]
+        },
+        "s3_endpoint": {
+            "type": "string",
+            "title": "S3 endpoint URL",
+            "maxLength": 253
+        },
+        "s3_region": {
+            "type": "string",
+            "title": "S3 region",
+            "maxLength": 64
+        },
+        "s3_access_key": {
+            "type": "string",
+            "title": "S3 access key ID. Empty = keep",
+            "maxLength": 256
+        },
+        "s3_secret_access_key": {
+            "type": "string",
+            "title": "S3 secret access key. Empty = keep",
+            "maxLength": 256
+        },
+        "webdav_url": {
+            "type": "string",
+            "title": "WebDAV URL",
+            "maxLength": 512
+        },
+        "webdav_vendor": {
+            "type": "string",
+            "title": "WebDAV server type",
+            "enum": [
+                "",
+                "other",
+                "nextcloud",
+                "owncloud",
+                "sharepoint",
+                "fastmail"
+            ]
+        },
+        "smb_host": {
+            "type": "string",
+            "title": "SMB server",
+            "maxLength": 253
+        },
+        "smb_domain": {
+            "type": "string",
+            "title": "SMB domain",
+            "maxLength": 253
+        },
+        "target_user": {
+            "type": "string",
+            "title": "User name for WebDAV/SMB",
+            "maxLength": 256
+        },
+        "target_password": {
+            "type": "string",
+            "title": "Password for WebDAV/SMB. Empty = keep",
+            "maxLength": 1024
+        },
+        "file_prefix": {
+            "type": "string",
+            "title": "File name prefix",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+        },
+        "retention": {
+            "type": "integer",
+            "title": "Copies to keep on the target",
+            "minimum": 1,
+            "maximum": 1000
+        },
+        "schedule_enabled": {
+            "type": "boolean",
+            "title": "Export on a schedule"
+        },
+        "schedule_frequency": {
+            "type": "string",
+            "enum": [
+                "daily",
+                "weekly",
+                "monthly"
+            ],
+            "title": "Frequency"
+        },
+        "schedule_weekday": {
+            "type": "string",
+            "enum": [
+                "Mon",
+                "Tue",
+                "Wed",
+                "Thu",
+                "Fri",
+                "Sat",
+                "Sun"
+            ],
+            "title": "Weekday (weekly)"
+        },
+        "schedule_monthday": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 28,
+            "title": "Day of the month (monthly)"
+        },
+        "schedule_time": {
+            "type": "string",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "title": "Time (HH:MM, node time)"
+        },
+        "notify_email": {
+            "type": "string",
+            "title": "Report mail recipient (empty = no mail)",
+            "maxLength": 254
+        },
+        "notify_from": {
+            "type": "string",
+            "title": "Sender address (empty = smarthost user or no-reply@node)",
+            "maxLength": 254
+        },
+        "notify_mode": {
+            "type": "string",
+            "enum": [
+                "always",
+                "failure",
+                "never"
+            ],
+            "title": "When to send the report mail"
+        },
+        "mail_language": {
+            "type": "string",
+            "enum": [
+                "en",
+                "de",
+                "it",
+                "fr"
+            ],
+            "title": "Language of the report mail"
+        }
+    }
+}

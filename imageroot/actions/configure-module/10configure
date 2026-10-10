@@ -1,0 +1,241 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Store the settings. Plain settings go to the environment, secrets to
+# state/passwords.env, target credentials to state/rclone/rclone.conf. A
+# secret field left empty keeps the stored value. Validation errors never
+# echo the value of a secret field.
+
+import base64
+import json
+import re
+import sys
+import urllib.parse
+
+import agent
+import pbx
+
+data = json.load(sys.stdin)
+env = agent.read_envfile("environment")
+errors = []
+
+SECRET_FIELDS = {"passbolt_private_key", "passbolt_key_password", "passbolt_totp_secret", "kdbx_password",
+                 "kdbx_keyfile_secret", "target_token", "s3_access_key", "s3_secret_access_key", "target_password"}
+
+
+def fail(field, error):
+    value = "" if field in SECRET_FIELDS else data.get(field, "")
+    errors.append({"field": field, "parameter": field, "value": value, "error": error})
+
+
+def text(name):
+    return (data.get(name) or "").strip()
+
+
+# --- Passbolt account -------------------------------------------------------
+
+url = text("passbolt_url").rstrip("/")
+if url:
+    parsed = urllib.parse.urlsplit(url)
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.query or parsed.fragment:
+        fail("passbolt_url", "passbolt_url_invalid")
+
+ca_pem = text("passbolt_ca_pem")
+if ca_pem and ("-----BEGIN CERTIFICATE-----" not in ca_pem or "PRIVATE KEY" in ca_pem):
+    fail("passbolt_ca_pem", "ca_pem_invalid")
+
+private_key = (data.get("passbolt_private_key") or "").strip()
+if private_key and ("-----BEGIN PGP PRIVATE KEY BLOCK-----" not in private_key
+                    or "-----END PGP PRIVATE KEY BLOCK-----" not in private_key):
+    fail("passbolt_private_key", "private_key_invalid")
+
+passphrase = data.get("passbolt_key_password") or ""
+
+totp = pbx.normalize_totp(data.get("passbolt_totp_secret"))
+if totp and not pbx.TOTP_RE.match(totp):
+    fail("passbolt_totp_secret", "totp_secret_invalid")
+
+# --- KeePass protection -----------------------------------------------------
+
+kdbx_password = data.get("kdbx_password") or ""
+if kdbx_password and len(kdbx_password) < 12:
+    fail("kdbx_password", "kdbx_password_too_short")
+
+keyfile_enabled = bool(data.get("keyfile_enabled"))
+keyfile = (data.get("kdbx_keyfile_secret") or "").strip()
+if keyfile and not pbx.check_keyfile(keyfile):
+    fail("kdbx_keyfile_secret", "keyfile_invalid")
+if keyfile_enabled and not keyfile and not pbx.has_secret("keyfile"):
+    fail("kdbx_keyfile_secret", "keyfile_required")
+
+# --- target -----------------------------------------------------------------
+
+ttype = data.get("target_type") or ""
+tpath = pbx.check_path(data.get("target_path"))
+if tpath is None:
+    fail("target_path", "target_path_invalid")
+elif ttype in ("s3", "smb") and not tpath:
+    fail("target_path", "target_path_required")
+
+old = pbx.read_rclone()
+old_section = dict(old["target"]) if old.has_section("target") else {}
+same_type = old_section.get("type") == ttype
+
+
+def keep(field, option):
+    """New value of a secret target field, or the stored one."""
+    value = text(field)
+    if value:
+        return value, True
+    if same_type and old_section.get(option):
+        return old_section[option], False
+    return "", False
+
+
+section = None
+if ttype in pbx.OAUTH_TYPES:
+    token, new_token = keep("target_token", "token")
+    if not token:
+        fail("target_token", "target_token_required")
+    elif new_token:
+        try:
+            parsed_token = json.loads(token)
+            if not isinstance(parsed_token, dict) or not parsed_token.get("access_token"):
+                raise ValueError
+        except ValueError:
+            fail("target_token", "target_token_invalid")
+    section = {"type": ttype, "token": token}
+    if ttype == "pcloud":
+        section["hostname"] = data.get("pcloud_hostname") or "api.pcloud.com"
+    if ttype == "drive":
+        section["scope"] = "drive"
+    if ttype == "onedrive" and not errors:
+        if new_token or not old_section.get("drive_id"):
+            try:
+                section["drive_id"], section["drive_type"] = pbx.onedrive_drive(token)
+            except Exception as exc:
+                print(agent.SD_ERR + "OneDrive lookup failed: %s" % type(exc).__name__, file=sys.stderr)
+                fail("target_token", "onedrive_lookup_failed")
+        else:
+            section["drive_id"], section["drive_type"] = old_section["drive_id"], old_section.get("drive_type", "personal")
+elif ttype == "s3":
+    access, _ = keep("s3_access_key", "access_key_id")
+    secret, _ = keep("s3_secret_access_key", "secret_access_key")
+    endpoint = text("s3_endpoint")
+    if not access:
+        fail("s3_access_key", "required")
+    if not secret:
+        fail("s3_secret_access_key", "required")
+    if endpoint and urllib.parse.urlsplit(endpoint).scheme != "https":
+        fail("s3_endpoint", "https_required")
+    if not endpoint and (data.get("s3_provider") or "AWS") != "AWS":
+        fail("s3_endpoint", "required")
+    section = {"type": "s3", "provider": data.get("s3_provider") or "Other", "env_auth": "false",
+               "access_key_id": access, "secret_access_key": secret, "no_check_bucket": "true"}
+    if endpoint:
+        section["endpoint"] = endpoint
+    if text("s3_region"):
+        section["region"] = text("s3_region")
+elif ttype in ("webdav", "smb"):
+    user = text("target_user")
+    password_new = data.get("target_password") or ""
+    if not user:
+        fail("target_user", "required")
+    if ttype == "webdav":
+        wurl = text("webdav_url")
+        if urllib.parse.urlsplit(wurl).scheme != "https":
+            fail("webdav_url", "https_required")
+        section = {"type": "webdav", "url": wurl, "vendor": data.get("webdav_vendor") or "other", "user": user}
+    else:
+        host = text("smb_host")
+        if not re.match(r"^[A-Za-z0-9.-]{1,253}$", host):
+            fail("smb_host", "smb_host_invalid")
+        section = {"type": "smb", "host": host, "user": user}
+        if text("smb_domain"):
+            section["domain"] = text("smb_domain")
+    if password_new:
+        pass  # obscured below, after validation
+    elif same_type and old_section.get("pass"):
+        section["pass"] = old_section["pass"]
+    else:
+        fail("target_password", "required")
+
+# --- schedule and report ----------------------------------------------------
+
+notify_email = text("notify_email")
+if notify_email and not pbx.EMAIL_RE.match(notify_email):
+    fail("notify_email", "email_invalid")
+notify_from = text("notify_from")
+if notify_from and not pbx.EMAIL_RE.match(notify_from):
+    fail("notify_from", "email_invalid")
+
+if errors:
+    agent.set_status("validation-failed")
+    json.dump(errors, fp=sys.stdout)
+    sys.exit(3)
+
+# --- apply ------------------------------------------------------------------
+
+if section is not None and section["type"] in ("webdav", "smb") and (data.get("target_password") or ""):
+    section["pass"] = pbx.obscure(data["target_password"])
+
+# A different server or account invalidates the pinned server key.
+if url != env.get("PASSBOLT_URL", "") or private_key:
+    pbx.set_secrets({"verify_token": "", "verify_enc_token": ""})
+    agent.set_env("PASSBOLT_USER", "")
+
+secrets = {}
+if private_key:
+    secrets["private_key"] = private_key + "\n"
+if passphrase:
+    secrets["passphrase"] = passphrase
+if totp:
+    secrets["totp_secret"] = totp
+elif data.get("clear_totp_secret"):
+    secrets["totp_secret"] = ""
+if kdbx_password:
+    secrets["kdbx_password"] = kdbx_password
+if not keyfile_enabled:
+    secrets["keyfile"] = ""
+elif keyfile:
+    secrets["keyfile"] = keyfile + "\n"
+if secrets:
+    pbx.set_secrets(secrets)
+
+if section is None:
+    pbx.remove_rclone()
+else:
+    pbx.write_rclone(section)
+
+agent.mset_env({
+    "PASSBOLT_URL": url,
+    "PASSBOLT_CA_B64": base64.b64encode(ca_pem.encode()).decode() if ca_pem else "",
+    "KEYFILE_ENABLED": "true" if keyfile_enabled else "false",
+    "TARGET_TYPE": ttype,
+    "TARGET_PATH": tpath,
+    "TARGET_PCLOUD_HOSTNAME": data.get("pcloud_hostname") or "",
+    "TARGET_S3_PROVIDER": data.get("s3_provider") or "",
+    "TARGET_S3_ENDPOINT": text("s3_endpoint"),
+    "TARGET_S3_REGION": text("s3_region"),
+    "TARGET_WEBDAV_URL": text("webdav_url"),
+    "TARGET_WEBDAV_VENDOR": data.get("webdav_vendor") or "",
+    "TARGET_SMB_HOST": text("smb_host"),
+    "TARGET_SMB_DOMAIN": text("smb_domain"),
+    "TARGET_USER": text("target_user"),
+    "FILE_PREFIX": data.get("file_prefix") or "passbolt-export",
+    "RETENTION": str(data["retention"]),
+    "SCHEDULE_ENABLED": "true" if data.get("schedule_enabled") else "false",
+    "SCHEDULE_FREQUENCY": data["schedule_frequency"],
+    "SCHEDULE_WEEKDAY": data["schedule_weekday"],
+    "SCHEDULE_MONTHDAY": str(data["schedule_monthday"]),
+    "SCHEDULE_TIME": data["schedule_time"],
+    "NOTIFY_EMAIL": notify_email,
+    "NOTIFY_FROM": notify_from,
+    "NOTIFY_MODE": data["notify_mode"],
+    "MAIL_LANGUAGE": data["mail_language"],
+})
+print(agent.SD_INFO + "settings stored (target: %s)" % (ttype or "none"), file=sys.stderr)
