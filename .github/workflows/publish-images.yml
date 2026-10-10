@@ -1,0 +1,53 @@
+name: "Publish images"
+
+# Builds both images of the module (passbolt-export, passbolt-export-app) for every
+# branch and tag. A version tag and main are also pushed as "latest", like
+# NethServer's publish-branch: the catalog reads the versions from that
+# image, and the QEMU tests of main install it.
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  publish-images:
+    name: Publish module images
+    runs-on: ubuntu-latest
+    env:
+      REPOBASE: ghcr.io/${{ github.repository_owner }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/cache@v4
+        with:
+          path: ui/node_modules
+          key: "yarn-${{ hashFiles('ui/yarn.lock') }}"
+      - name: Image tag from the branch or tag name
+        run: |
+          tag="${GITHUB_REF_NAME//\//-}"
+          echo "IMAGETAG=${tag,,}" >> "$GITHUB_ENV"
+      - name: Build
+        run: bash build-images.sh
+      - name: Push
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$TOKEN" | buildah login -u "${{ github.actor }}" --password-stdin ghcr.io
+          for image in passbolt-export-app passbolt-export; do
+            buildah push "${REPOBASE,,}/${image}" "docker://${REPOBASE,,}/${image}:${IMAGETAG}"
+            # :latest for release tags and main, like NethServer's
+            # publish-branch: the QEMU tests of main install :latest
+            if [[ "${GITHUB_REF_TYPE}" == "tag" || "${GITHUB_REF_NAME}" == "main" ]]; then
+              buildah push "${REPOBASE,,}/${image}" "docker://${REPOBASE,,}/${image}:latest"
+            fi
+          done
+          echo "### Images" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ${REPOBASE,,}/passbolt-export:${IMAGETAG}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ${REPOBASE,,}/passbolt-export-app:${IMAGETAG}" >> "$GITHUB_STEP_SUMMARY"
