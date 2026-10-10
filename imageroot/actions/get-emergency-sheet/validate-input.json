@@ -5,13 +5,32 @@
     "description": "Return the secrets of the emergency sheet, encrypted with the password of the cluster administrator who asks for them. The name of the field makes the NS8 agent blank it in the stored task context.",
     "type": "object",
     "additionalProperties": false,
-    "required": ["admin_password"],
+    "required": [
+        "admin_password"
+    ],
     "properties": {
         "admin_password": {
             "type": "string",
             "title": "Password of the logged-in cluster administrator",
             "minLength": 1,
             "maxLength": 1024
+        },
+        "format": {
+            "type": "string",
+            "enum": [
+                "print",
+                "pdf"
+            ],
+            "title": "print = sealed data for the browser print view; pdf = AES-256 encrypted PDF (open password = admin password), sealed as well"
+        },
+        "labels": {
+            "type": "object",
+            "title": "Texts of the PDF in the language of the UI",
+            "maxProperties": 100,
+            "additionalProperties": {
+                "type": "string",
+                "maxLength": 600
+            }
         }
     }
 }

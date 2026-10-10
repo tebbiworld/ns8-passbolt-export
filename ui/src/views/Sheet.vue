@@ -55,6 +55,14 @@
                 @click.prevent="run('key')"
                 >{{ $t("sheet.download_key") }}</NsButton
               >
+              <NsButton
+                kind="tertiary"
+                :icon="DocumentPdf20"
+                :loading="loading && mode === 'pdf'"
+                :disabled="loading || !admin_password"
+                @click.prevent="run('pdf')"
+                >{{ $t("sheet.download_pdf") }}</NsButton
+              >
             </div>
           </cv-form>
           <NsInlineNotification
@@ -81,6 +89,7 @@
 import { mapState } from "vuex";
 import Printer20 from "@carbon/icons-vue/es/printer/20";
 import Download20 from "@carbon/icons-vue/es/download/20";
+import DocumentPdf20 from "@carbon/icons-vue/es/document--pdf/20";
 import {
   QueryParamService,
   UtilService,
@@ -114,8 +123,8 @@ body { margin: 0; font-family: "DejaVu Sans", Arial, Helvetica, sans-serif; font
 .xml { margin: .8mm 0; padding: 1mm 2mm; background: #f2f2f2; border-radius: 1mm; font-family: "DejaVu Sans Mono", "Courier New", monospace; font-size: 6.5pt; white-space: pre; color: #333; }
 .note { font-size: 7pt; color: #333; margin: .6mm 0; }
 .none { color: #666; font-style: italic; }
-.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm; }
-.cols .box { margin-bottom: 2.2mm; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm; margin-bottom: 2.2mm; }
+.cols .box { margin-bottom: 0; }
 .kv { width: 100%; border-collapse: collapse; }
 .kv td { padding: .5mm 0; vertical-align: top; border-bottom: .4pt solid #ccc; }
 .kv .k { width: 30%; font-size: 7.5pt; color: #444; padding-right: 2mm; }
@@ -143,6 +152,7 @@ export default {
       urlCheckInterval: null,
       Printer20,
       Download20,
+      DocumentPdf20,
       admin_password: "",
       loading: false,
       mode: "",
@@ -196,7 +206,7 @@ export default {
         key,
         b64(sealed.ciphertext)
       );
-      return JSON.parse(new TextDecoder().decode(plain));
+      return new TextDecoder().decode(plain);
     },
     async run(mode) {
       this.error.admin_password = "";
@@ -208,14 +218,22 @@ export default {
       this.admin_password = "";
       let sheet = null;
       try {
-        const res = await this.runModuleTask("get-emergency-sheet", {
-          admin_password: password,
-        });
-        sheet = await this.open(res.sealed, password);
-        if (mode === "key") {
-          this.downloadKey(sheet);
+        const data = { admin_password: password, format: "print" };
+        if (mode === "pdf") {
+          data.format = "pdf";
+          data.labels = this.pdfLabels();
+        }
+        const res = await this.runModuleTask("get-emergency-sheet", data);
+        const plain = await this.open(res.sealed, password);
+        if (mode === "pdf") {
+          this.downloadPdf(plain);
         } else {
-          this.printSheet(sheet, res.user);
+          sheet = JSON.parse(plain);
+          if (mode === "key") {
+            this.downloadKey(sheet);
+          } else {
+            this.printSheet(sheet, res.user);
+          }
         }
         this.done = mode;
       } catch (e) {
@@ -231,6 +249,37 @@ export default {
         sheet = null;
         this.loading = false;
       }
+    },
+    pdfLabels() {
+      // the texts of the printed page in the language of this UI
+      const messages = this.$i18n.getLocaleMessage(this.$i18n.locale) || {};
+      const labels = {};
+      for (const k of Object.keys(messages.sheet || {})) {
+        if (k.startsWith("p_") && k !== "p_created") {
+          labels[k.substring(2)] = this.$t("sheet." + k);
+        }
+      }
+      labels.created = this.$t("sheet.p_created", {
+        date: "{date}",
+        user: "{user}",
+        module: "{module}",
+      });
+      for (const t of Object.keys(messages.target || {})) {
+        labels["target_" + t] = this.$t("target." + t);
+      }
+      return labels;
+    },
+    downloadPdf(b64pdf) {
+      // the file itself is encrypted (AES-256) with the admin password
+      const bytes = Uint8Array.from(atob(b64pdf), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "emergency-sheet-" + this.instanceName + ".pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
     },
     downloadKey(sheet) {
       if (!sheet.private_key) {

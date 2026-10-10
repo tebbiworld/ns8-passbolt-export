@@ -104,18 +104,34 @@ sheet = {
     "last_sha256": (last_ok or {}).get("sha256", ""),
 }
 
+fmt = request.get("format", "print")
+if fmt == "pdf":
+    labels = request.get("labels") or {}
+    target = os.environ.get("TARGET_TYPE", "")
+    where = (labels.get("target_" + target, target) + " · " + sheet["target_path"]) if target else "-"
+    engine_input = {"password": request["admin_password"], "labels": labels, "sheet": {
+        "created": time.strftime("%Y-%m-%d %H:%M"), "user": user, "module_id": sheet["module_id"],
+        "passbolt_url": sheet["passbolt_url"], "passbolt_user": sheet["passbolt_user"],
+        "passphrase": sheet["passphrase"], "totp_secret": sheet["totp_secret"],
+        "kdbx_password": sheet["kdbx_password"], "keyfile_hex": sheet["keyfile_hex"],
+        "keyfile_hash": sheet["keyfile_hash"], "where": where, "last_file": sheet["last_file"],
+        "last_sha256": sheet["last_sha256"]}}
+    command = "pdf"
+else:
+    engine_input = {"password": request["admin_password"], "plaintext": json.dumps(sheet)}
+    command = "seal"
+
 proc = subprocess.run(["podman", "run", "--rm", "-i", "--network=none", "--read-only", "--cap-drop=all",
                        "--security-opt=no-new-privileges", "--log-driver=none",
-                       os.environ["PASSBOLT_EXPORT_APP_IMAGE"], "seal"],
-                      input=json.dumps({"password": request["admin_password"], "plaintext": json.dumps(sheet)}),
-                      capture_output=True, text=True, timeout=300)
-del sheet
+                       os.environ["PASSBOLT_EXPORT_APP_IMAGE"], command],
+                      input=json.dumps(engine_input), capture_output=True, text=True, timeout=300)
+del sheet, engine_input
 try:
     sealed = json.loads(proc.stdout.strip().splitlines()[-1])
 except (ValueError, IndexError):
     sealed = {"ok": False}
 agent.assert_exp(proc.returncode == 0 and sealed.get("ok"), "sealing the emergency sheet failed")
 
-print(agent.SD_NOTICE + f"emergency sheet issued to {user!r}", file=sys.stderr)
+print(agent.SD_NOTICE + f"emergency sheet ({fmt}) issued to {user!r}", file=sys.stderr)
 sealed.pop("ok", None)
-json.dump({"user": user, "sealed": sealed}, fp=sys.stdout)
+json.dump({"user": user, "format": fmt, "sealed": sealed}, fp=sys.stdout)

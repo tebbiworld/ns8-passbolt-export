@@ -307,8 +307,8 @@
     "content_6": "die Schritte, um die Kopie im Notfall zu öffnen",
     "danger_title": "Mit diesem Blatt lassen sich alle exportierten Kennwörter öffnen",
     "danger": "Nur auf einem vertrauenswürdigen Drucker drucken, sofort in einen versiegelten Umschlag stecken und im Tresor aufbewahren. Nach einer Änderung von KeePass-Kennwort oder Schlüsseldatei neu drucken.",
-    "pdf_title": "Es entsteht kein PDF",
-    "pdf": "Die Geheimnisse kommen mit deinem Kennwort verschlüsselt an und werden nur in diesem Browser zum Drucken entschlüsselt. Wählst du im Druckdialog „Als PDF speichern“, ist diese Datei NICHT verschlüsselt: nach dem Drucken löschen.",
+    "pdf_title": "Drucken oder verschlüsseltes PDF",
+    "pdf": "„Drucken“ schickt das Blatt direkt an den Drucker, es entsteht keine Datei. Wählst du im Druckdialog „Als PDF speichern“, ist diese Datei NICHT verschlüsselt. „Als verschlüsseltes PDF herunterladen“ liefert eine mit AES-256 geschützte Datei, die sich nur mit deinem Cluster-Kennwort öffnen lässt.",
     "admin_password": "Kennwort deines Cluster-Kontos ({user})",
     "admin_password_help": "Wird für jedes Drucken und jeden Download neu verlangt. Nach 5 Fehlversuchen ist die Seite 15 Minuten gesperrt.",
     "print": "Notfallblatt drucken",
@@ -351,6 +351,8 @@
     "p_keyfile_hex_short": "Oder: eine Datei nur mit den 64 Zeichen der 8 Gruppen, ohne Leerzeichen, ohne Zeilenumbruch am Ende. ␣ in einem Kennwort = Leerzeichen.",
     "p_box_where": "Wo die Datei liegt",
     "p_account_heading_short": "Passbolt-Export-Konto (nur lesend)",
-    "p_private_key_short": "Datei passbolt-recovery-kit-…asc auf USB-Stick in diesem Umschlag"
+    "p_private_key_short": "Datei passbolt-recovery-kit-…asc auf USB-Stick in diesem Umschlag",
+    "download_pdf": "Als verschlüsseltes PDF herunterladen",
+    "done_pdf": "Das PDF wurde heruntergeladen. Es öffnet sich nur mit deinem Cluster-Kennwort (AES-256). Ausdrucken und danach löschen, auch aus dem Download-Ordner und dem Papierkorb."
   }
 }

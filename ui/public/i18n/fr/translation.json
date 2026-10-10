@@ -307,8 +307,8 @@
     "content_6": "les étapes pour ouvrir la copie en cas d'urgence",
     "danger_title": "Cette page ouvre tous les mots de passe exportés",
     "danger": "Imprimez-la uniquement sur une imprimante de confiance, mettez-la aussitôt dans une enveloppe scellée et gardez-la dans un coffre. Réimprimez-la après un changement du mot de passe KeePass ou du fichier clé.",
-    "pdf_title": "Aucun PDF n'est créé",
-    "pdf": "Les secrets arrivent chiffrés avec votre mot de passe et ne sont déchiffrés que dans ce navigateur pour l'impression. Si vous choisissez « Enregistrer au format PDF » dans la boîte d'impression, ce fichier n'est PAS chiffré : supprimez-le après l'impression.",
+    "pdf_title": "Impression ou PDF chiffré",
+    "pdf": "« Imprimer » envoie la fiche directement à l'imprimante, sans créer de fichier. Si vous choisissez « Enregistrer au format PDF » dans la boîte d'impression, ce fichier n'est PAS chiffré. « Télécharger en PDF chiffré » fournit un fichier protégé par AES-256 qui ne s'ouvre qu'avec le mot de passe de votre compte du cluster.",
     "admin_password": "Mot de passe de votre compte du cluster ({user})",
     "admin_password_help": "Demandé à nouveau pour chaque impression ou téléchargement. Après 5 essais erronés, la page est bloquée pendant 15 minutes.",
     "print": "Imprimer la fiche d'urgence",
@@ -351,6 +351,8 @@
     "p_keyfile_hex_short": "Ou : un fichier contenant seulement les 64 caractères des 8 groupes, sans espaces ni saut de ligne final. ␣ dans un mot de passe = espace.",
     "p_box_where": "Où se trouve le fichier",
     "p_account_heading_short": "Compte d'export Passbolt (lecture seule)",
-    "p_private_key_short": "fichier passbolt-recovery-kit-…asc sur une clé USB dans cette enveloppe"
+    "p_private_key_short": "fichier passbolt-recovery-kit-…asc sur une clé USB dans cette enveloppe",
+    "download_pdf": "Télécharger en PDF chiffré",
+    "done_pdf": "Le PDF a été téléchargé. Il ne s'ouvre qu'avec le mot de passe de votre compte du cluster (AES-256). Imprimez-le, puis supprimez-le, aussi du dossier de téléchargements et de la corbeille."
   }
 }

@@ -307,8 +307,8 @@
     "content_6": "the steps to open the copy in an emergency",
     "danger_title": "This page opens all exported passwords",
     "danger": "Print it only on a printer you trust, put it in a sealed envelope right away and keep it in a safe. Print it again after changing the KeePass password or the key file.",
-    "pdf_title": "No PDF is created",
-    "pdf": "The secrets are sent encrypted with your password and decrypted only in this browser for printing. If you choose \"Save as PDF\" in the print dialog, that file is NOT encrypted: delete it after printing.",
+    "pdf_title": "Print or encrypted PDF",
+    "pdf": "\"Print\" sends the sheet straight to the printer; no file is created. If you choose \"Save as PDF\" in the print dialog, that file is NOT encrypted. \"Download as encrypted PDF\" gives a file protected with AES-256 that opens only with your cluster password.",
     "admin_password": "Password of your cluster account ({user})",
     "admin_password_help": "Needed again for every print or download. After 5 wrong attempts the page is locked for 15 minutes.",
     "print": "Print emergency sheet",
@@ -351,6 +351,8 @@
     "p_keyfile_hex_short": "Or: a file with only the 64 characters of the 8 groups, no spaces, no line break at the end. ␣ in a password = space.",
     "p_box_where": "Where the file is",
     "p_account_heading_short": "Passbolt export account (read-only)",
-    "p_private_key_short": "file passbolt-recovery-kit-…asc on a USB stick in this envelope"
+    "p_private_key_short": "file passbolt-recovery-kit-…asc on a USB stick in this envelope",
+    "download_pdf": "Download as encrypted PDF",
+    "done_pdf": "The PDF was downloaded. It opens only with your cluster password (AES-256). Print it, then delete it, also from the downloads folder and the recycle bin."
   }
 }

@@ -307,8 +307,8 @@
     "content_6": "i passi per aprire la copia in caso di emergenza",
     "danger_title": "Questa pagina apre tutte le password esportate",
     "danger": "Stampala solo su una stampante affidabile, mettila subito in una busta sigillata e conservala in cassaforte. Ristampala dopo aver cambiato la password KeePass o il file chiave.",
-    "pdf_title": "Non viene creato alcun PDF",
-    "pdf": "I segreti arrivano cifrati con la tua password e vengono decifrati solo in questo browser per la stampa. Se nella finestra di stampa scegli \"Salva come PDF\", quel file NON è cifrato: eliminalo dopo la stampa.",
+    "pdf_title": "Stampa o PDF cifrato",
+    "pdf": "\"Stampa\" invia il foglio direttamente alla stampante, senza creare file. Se nella finestra di stampa scegli \"Salva come PDF\", quel file NON è cifrato. \"Scarica come PDF cifrato\" fornisce un file protetto con AES-256 che si apre solo con la password del tuo account del cluster.",
     "admin_password": "Password del tuo account del cluster ({user})",
     "admin_password_help": "Richiesta di nuovo per ogni stampa o download. Dopo 5 tentativi errati la pagina è bloccata per 15 minuti.",
     "print": "Stampa il foglio di emergenza",
@@ -351,6 +351,8 @@
     "p_keyfile_hex_short": "Oppure: un file con solo i 64 caratteri degli 8 gruppi, senza spazi e senza a capo finale. ␣ in una password = spazio.",
     "p_box_where": "Dove si trova il file",
     "p_account_heading_short": "Account di esportazione Passbolt (sola lettura)",
-    "p_private_key_short": "file passbolt-recovery-kit-…asc su una chiavetta USB in questa busta"
+    "p_private_key_short": "file passbolt-recovery-kit-…asc su una chiavetta USB in questa busta",
+    "download_pdf": "Scarica come PDF cifrato",
+    "done_pdf": "Il PDF è stato scaricato. Si apre solo con la password del tuo account del cluster (AES-256). Stampalo e poi eliminalo, anche dalla cartella dei download e dal cestino."
   }
 }
