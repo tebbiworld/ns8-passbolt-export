@@ -1,0 +1,77 @@
+======Passbolt Export======
+NethServer 8 module that exports [[https://www.passbolt.com|Passbolt]] on a schedule into an encrypted KeePass file (KDBX 4) and uploads it outside the server: Dropbox, Microsoft OneDrive, Google Drive, pCloud, S3 compatible storage, WebDAV or an SMB share. The file opens with KeePassXC, Strongbox, KeePassDX or KeeWeb, without a server and without Passbolt.
+
+====Announcement and talks====
+TBA
+
+Passbolt Export is a community application from the [[ns8:tebbiworld_repository|tebbiworld]] repository. Documentation and source can be found on [[https://github.com/tebbiworld/ns8-passbolt-export|Github]]
+
+=====Why: the circular dependency=====
+Many installations keep every password in Passbolt, including the ones needed to bring Passbolt back:
+  - Passbolt runs on NethServer 8. If the node, its disk or the whole cluster is lost, Passbolt is gone with it.
+  - Restoring NethServer 8 needs the login of the backup destination, the encryption password of the backup repository and an administrator account. They are in Passbolt.
+  - Even a restored Passbolt still needs the recovery kit (private key) and its passphrase before anything can be read.
+  - So: **without NethServer 8 no Passbolt, without Passbolt no restore of NethServer 8.** The module backup of Passbolt does not break this circle, because it can only be restored on a running NethServer 8.
+This module breaks it: a current, encrypted copy of the passwords lies outside the server and opens anywhere with a free KeePass app.
+
+=====The offline emergency kit=====
+Keep these outside Passbolt and outside the server (paper, USB stick, safe), next to the Passbolt recovery kit:
+  * the login of the upload target, including its two-factor recovery codes
+  * the KeePass password and, if enabled, the key file
+  * your own Passbolt recovery kit and passphrase
+  * the encryption password of the NS8 backup repository and an administrator login
+If one of them exists only in Passbolt, the emergency copy is useless in exactly the case it is made for.
+
+=====What it does=====
+  * Passbolt folders become KeePass groups; name, user name, URL, password, description, TOTP and custom fields are exported
+  * KDBX 4 (Argon2d, ChaCha20), password of at least 12 characters plus an optional key file generated in the browser; the key file is never uploaded
+  * every export is opened and counted again before the upload; SHA-256, entries and result are kept in a history and mailed through the cluster smarthost
+  * schedule daily, weekly or monthly, "Export now", connection check, retention of the last copies (default 12; only files written by the module are deleted)
+  * the Passbolt server key is pinned at the first successful login
+  * Passbolt instances of the cluster can be picked from a list; a private CA can be added
+  * **emergency sheet**: after re-entering the cluster admin password, one A4 page with the KeePass password, the key file to type in again, passphrase and TOTP secret of the export account and empty lines for the upload target login and the NS8 backup repository key is printed from the browser; the recovery kit can be downloaded the same way. The content leaves the module only encrypted with that password; no PDF is created
+  * rootless, no port, no route; the export runs in a short-lived container (Go program on the official Passbolt SDK, rclone for the upload)
+
+=====Installation=====
+Install **Passbolt Export** from the Software Center (repository tebbiworld), or:
+<code bash>
+add-module ghcr.io/tebbiworld/passbolt-export:1.0.0 1
+</code>
+
+=====Setting up the export account=====
+  - In Passbolt create a user for the export, role User, finish its setup and keep its recovery kit (''passbolt-recovery-kit.asc'') and passphrase.
+  - If two-factor authentication is required, enable **TOTP** for this account and note the base32 secret shown below the QR code. Security keys (WebAuthn) are not supported.
+  - Share your top-level folders with the account, permission "can read". Items created later in a shared folder through the web interface are shared as well. Personal items outside shared folders are not exported.
+  - Enter address, recovery kit, passphrase and TOTP secret in the module settings, press **Check connection** on the status page.
+
+=====Connecting a cloud service=====
+Dropbox, OneDrive, Google Drive and pCloud use a token that rclone creates on your own computer. Install rclone from [[https://rclone.org/downloads/|rclone.org]], run one of:
+<code bash>
+rclone authorize "dropbox"
+rclone authorize "onedrive"
+rclone authorize "drive"
+rclone authorize "pcloud"
+</code>
+log in in the browser and paste the printed token into the settings. S3, WebDAV and SMB take their usual credentials.
+
+=====In an emergency=====
+  - Log in to the upload target from any device and download the newest ''passbolt-export-YYYY-MM-DD_HHMMSS.kdbx''.
+  - Open it with KeePassXC (Windows, macOS, Linux), Strongbox (iOS, macOS), KeePassDX (Android) or KeeWeb, using the KeePass password and the key file.
+  - Compare the SHA-256 checksum with the report mail, e.g. ''sha256sum'' on Linux, ''shasum -a 256'' on macOS, ''Get-FileHash'' in PowerShell.
+Test this every few months with the offline kit only, on a device without access to Passbolt.
+
+=====Security notes and limits=====
+  * The module stores the key, passphrase and TOTP secret of the export account (file readable only by the module, in the encrypted NS8 backup). Whoever controls the node can read what this account can read: keep it read-only.
+  * The copy is as strong as the KeePass password and the key file.
+  * The export is a one-way reading copy; restore Passbolt itself from the NS8 backup.
+  * Not exported: comments, tags, sharing permissions, password expiry.
+
+=====Logo=====
+Passbolt icon (passbolt_styleguide, AGPL-3.0; Passbolt is a trademark of Passbolt SA), KeePassXC icon (LGPL-2) and the ISO 7010 E003 first aid sign. Not affiliated with Passbolt SA or the KeePassXC team.
+
+{{tag>application}}
+{{tag>category:Security}}
+{{tag>status:Alpha}}
+{{tag>certlevel:1}}
+{{tag>repo:tebbiworld}}
+{{tag>description:"Scheduled emergency copy of Passbolt as an encrypted KeePass file outside the server"}}
