@@ -29,7 +29,7 @@ If one of them exists only in Passbolt, the emergency copy is useless in exactly
   * schedule daily, weekly or monthly, "Export now", connection check, retention of the last copies (default 12; only files written by the module are deleted)
   * the Passbolt server key is pinned at the first successful login
   * Passbolt instances of the cluster can be picked from a list; a private CA can be added
-  * **emergency sheet**: after re-entering the cluster admin password, one A4 page with the KeePass password, the key file to type in again, passphrase and TOTP secret of the export account and empty lines for the upload target login and the NS8 backup repository key is printed from the browser; the recovery kit can be downloaded the same way. The content leaves the module only encrypted with that password; no PDF is created
+  * **emergency sheet**: after re-entering the cluster admin password, one A4 page with the KeePass password, the key file to type in again, passphrase and TOTP secret of the export account and empty lines for the upload target login and the NS8 backup repository key is printed from the browser; the recovery kit can be downloaded the same way. The content leaves the module only encrypted with that password. Alternatively the page is downloaded as a PDF encrypted with AES-256 (open password = the cluster password)
   * rootless, no port, no route; the export runs in a short-lived container (Go program on the official Passbolt SDK, rclone for the upload)
 
 =====Installation=====

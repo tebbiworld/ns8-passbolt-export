@@ -63,9 +63,11 @@ exactly the case it is made for.
   straight from the browser. The recovery kit of the export account can be
   downloaded the same way. The module sends the content only encrypted with
   that password (PBKDF2-SHA256, AES-256-GCM), because NS8 keeps task output in
-  Redis for hours; the browser decrypts it, prints it and forgets it. No PDF is
-  created (the print dialog's "Save as PDF" would not be encrypted). Five wrong
-  passwords lock the sheet for 15 minutes.
+  Redis for hours; the browser decrypts it, prints it and forgets it (the print
+  dialog's "Save as PDF" would not be encrypted). Alternatively the same page
+  is downloaded as PDF 2.0 encrypted with AES-256 (revision 6, pdfcpu), open
+  password = that cluster password, printing allowed, changes not; it travels
+  sealed the same way. Five wrong passwords lock the sheet for 15 minutes.
 - UI in English, German, Italian and French, with an emergency guide.
 
 ## How it works

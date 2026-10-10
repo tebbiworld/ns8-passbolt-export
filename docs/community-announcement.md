@@ -24,7 +24,7 @@ The module breaks the circle. You need only a small offline kit (paper or USB st
 - Opens and counts every export again before the upload; checksum and result in a history and in a report mail through the cluster smarthost.
 - Daily, weekly or monthly schedule, "Export now", connection check, pinning of the Passbolt server key.
 - Passbolt instances of the cluster can be picked from a list.
-- An emergency sheet for the safe: after re-entering your cluster admin password, one A4 page with everything needed to open the copy (KeePass password, key file to type in, export account) and empty lines for the cloud login and the NS8 backup key, printed straight from the browser. The content leaves the server only encrypted with your password.
+- An emergency sheet for the safe: after re-entering your cluster admin password, one A4 page with everything needed to open the copy (KeePass password, key file to type in, export account) and empty lines for the cloud login and the NS8 backup key, printed straight from the browser or downloaded as an AES-256 encrypted PDF. The content leaves the server only encrypted with your password.
 - Rootless, no route, no port. The export runs in a short-lived container: a small Go program on the official Passbolt SDK (go-passbolt) and rclone. Secrets go to it on stdin only.
 - UI in English, German, Italian and French, with an emergency guide.
 
