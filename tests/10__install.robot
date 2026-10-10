@@ -13,6 +13,9 @@ Install the module
     &{output} =    Evaluate    ${output}
     Set Global Variable    ${module_id}    ${output.module_id}
 
+The module keeps its selfadm role
+    The module may still configure itself    ${module_id}
+
 A fresh instance has no timer and nothing to export
     ${cfg} =    Run task    module/${module_id}/get-configuration    {}
     Should Not Be True    ${cfg['target_configured']}

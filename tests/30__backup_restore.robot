@@ -33,6 +33,7 @@ The restored instance has the settings, the secrets and the history
     ${sums} =    Secret checksums    ${restored_id}
     Should Be Equal    ${sums}    ${SUMS_ORIG}
     Secrets are kept out of the module environment    ${restored_id}
+    The module may still configure itself    ${restored_id}
     Run on node    runagent -m ${restored_id} systemctl --user is-enabled passbolt-export.timer
 
 *** Keywords ***

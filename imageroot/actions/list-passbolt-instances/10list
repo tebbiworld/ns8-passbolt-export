@@ -6,9 +6,10 @@
 #
 
 # Passbolt instances of the cluster with their public address, offered as a
-# choice in the settings page. Uses the reader role on passbolt modules
-# (org.nethserver.authorizations=passbolt@any:reader) to call their
-# get-configuration action; an instance that does not answer is skipped.
+# choice in the settings page. The instances are found in Redis, their host
+# name is read from the Traefik route of the instance on its node (reader role
+# on Traefik, org.nethserver.authorizations=traefik@any:reader). An instance
+# without a route is skipped.
 
 import json
 import re
@@ -25,7 +26,9 @@ for key in rdb.scan_iter(match="module/*/environment", count=200):
         continue
     module_id = key.split("/")[1]
     try:
-        response = agent.tasks.run(agent_id=f"module/{module_id}", action="get-configuration", data={})
+        node_id = rdb.hget("cluster/module_node", module_id) or rdb.hget(key, "NODE_ID")
+        traefik = agent.resolve_agent_id("traefik@node", node_id=node_id)
+        response = agent.tasks.run(agent_id=traefik, action="get-route", data={"instance": module_id})
     except Exception as exc:
         print(agent.SD_WARNING + f"{module_id}: {type(exc).__name__}", file=sys.stderr)
         continue

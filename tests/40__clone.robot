@@ -4,6 +4,7 @@ Resource    api.resource
 
 *** Test Cases ***
 Clone the module
+    The module may still configure itself    ${restored_id}
     ${out} =    Run task    cluster/clone-module    {"module":"${restored_id}","replace":false,"node":1}
     Set Global Variable    ${clone_id}    ${out['module_id']}
     Should Not Be Equal    ${clone_id}    ${restored_id}
@@ -16,6 +17,7 @@ The clone has the settings and the secrets
     Should Be True    ${cfg['passphrase_set']}
     Should Be True    ${cfg['target_configured']}
     Secrets are kept out of the module environment    ${clone_id}
+    The module may still configure itself    ${clone_id}
     Run on node    runagent -m ${clone_id} systemctl --user is-enabled passbolt-export.timer
 
 Remove the clone

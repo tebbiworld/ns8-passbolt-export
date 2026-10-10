@@ -84,3 +84,11 @@ No test secret is visible outside the secrets files
         ${hits} =    Run on node    (redis-cli --scan --pattern 'task/module/${mid}/*' | xargs -r -n1 redis-cli get; redis-cli hgetall module/${mid}/environment; journalctl --since "-30 min" --no-pager -o cat) 2>/dev/null | grep -c -F -- '${value}' || true
         Should Be Equal As Integers    ${hits.strip()}    0    a test secret leaked
     END
+
+The module may still configure itself
+    [Documentation]    The module needs its selfadm role on itself (restore and
+    ...                clone call configure-module). A grant on "passbolt@any"
+    ...                once replaced it, because the core matches module/passbolt*.
+    [Arguments]    ${mid}
+    ${role} =    Run on node    redis-cli hget roles/module/${mid} module/${mid}
+    Should Be Equal    ${role.strip()}    selfadm

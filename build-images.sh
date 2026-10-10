@@ -39,11 +39,14 @@ buildah run \
 buildah add "${container}" imageroot /imageroot
 buildah add "${container}" ui/dist /ui
 # No port, no route, no volume: the engine runs only during an export, in a
-# short-lived rootless container. The reader role on Passbolt modules lets the
-# settings page list the Passbolt instances of the cluster (get-configuration).
+# short-lived rootless container. The reader role on Traefik lets the settings
+# page show the address of each Passbolt instance (get-route). A grant on
+# "passbolt@any" is NOT used: the core turns it into the pattern module/passbolt*,
+# which also matches this module (passbolt-export) and replaces its own
+# selfadm role, so restore and clone could no longer call configure-module.
 buildah config --entrypoint=/ \
     --label="org.nethserver.rootfull=0" \
-    --label="org.nethserver.authorizations=passbolt@any:reader" \
+    --label="org.nethserver.authorizations=traefik@any:reader" \
     --label="org.nethserver.images=${app_image}" \
     "${container}"
 buildah commit "${container}" "${repobase}/${reponame}"
