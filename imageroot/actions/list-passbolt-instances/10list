@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Passbolt instances of the cluster with their public address, offered as a
+# choice in the settings page. The instances are found in Redis, their host
+# name is read from the Traefik route of the instance on its node (reader role
+# on Traefik, org.nethserver.authorizations=traefik@any:reader). An instance
+# without a route is skipped.
+
+import json
+import re
+import sys
+
+import agent
+import agent.tasks
+
+rdb = agent.redis_connect()
+found = []
+for key in rdb.scan_iter(match="module/*/environment", count=200):
+    image = rdb.hget(key, "IMAGE_URL") or ""
+    if not re.search(r"/passbolt:[^/]*$", image):
+        continue
+    module_id = key.split("/")[1]
+    try:
+        node_id = rdb.hget("cluster/module_node", module_id) or rdb.hget(key, "NODE_ID")
+        traefik = agent.resolve_agent_id("traefik@node", node_id=node_id)
+        response = agent.tasks.run(agent_id=traefik, action="get-route", data={"instance": module_id})
+    except Exception as exc:
+        print(agent.SD_WARNING + f"{module_id}: {type(exc).__name__}", file=sys.stderr)
+        continue
+    host = (response.get("output") or {}).get("host", "") if response.get("exit_code") == 0 else ""
+    if host and re.match(r"^[A-Za-z0-9.-]{1,253}$", host):
+        found.append({"module_id": module_id, "url": f"https://{host}"})
+    else:
+        print(agent.SD_WARNING + f"{module_id}: no host name configured or not readable", file=sys.stderr)
+
+json.dump({"instances": sorted(found, key=lambda i: i["module_id"])}, fp=sys.stdout)

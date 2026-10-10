@@ -1,0 +1,17 @@
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Oneshot: one scheduled export (bin/export-run). The engine container lives
+# only while the export runs; there is no long-running service.
+
+[Unit]
+Description=Passbolt export to an encrypted KeePass file
+
+[Service]
+Type=oneshot
+EnvironmentFile=%S/state/environment
+WorkingDirectory=%S/state
+ExecStart=runagent export-run
+TimeoutStartSec=30min
+SyslogIdentifier=%N

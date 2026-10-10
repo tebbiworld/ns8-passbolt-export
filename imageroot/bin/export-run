@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Scheduled export, started by passbolt-export.service. The result goes to
+# state/runs.json, the journal and (if configured) the report mail.
+
+import sys
+
+import agent
+import pbx
+
+record = pbx.export("schedule")
+if record["ok"]:
+    print(agent.SD_INFO + "export ok: %s, %s entries, sha256 %s" % (record["file_name"], record["entries"], record["sha256"]),
+          file=sys.stderr)
+else:
+    print(agent.SD_ERR + "export failed: %s" % record.get("error"), file=sys.stderr)
+    sys.exit(1)

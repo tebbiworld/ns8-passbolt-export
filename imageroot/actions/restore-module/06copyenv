@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Copy the plain settings of the original instance. The secrets come back with
+# the restored state/passwords.env and state/rclone/rclone.conf.
+
+import json
+import sys
+
+import agent
+
+request = json.load(sys.stdin)
+if "environment" in request:
+    env = request["environment"]
+else:
+    # clone-module (linked there as 20copyenv): the core imports only variables
+    # the new instance does not have yet, so the defaults of create-module
+    # would win. The source environment stays in environment.clone-module
+    # until the last step.
+    env = agent.read_envfile("environment.clone-module")
+
+KEEP = ["PASSBOLT_URL", "PASSBOLT_CA_B64", "PASSBOLT_USER", "KEYFILE_ENABLED", "TARGET_TYPE", "TARGET_PATH",
+        "TARGET_PCLOUD_HOSTNAME", "TARGET_S3_PROVIDER", "TARGET_S3_ENDPOINT", "TARGET_S3_REGION", "TARGET_WEBDAV_URL",
+        "TARGET_WEBDAV_VENDOR", "TARGET_SMB_HOST", "TARGET_SMB_DOMAIN", "TARGET_USER", "FILE_PREFIX", "RETENTION",
+        "SCHEDULE_ENABLED", "SCHEDULE_FREQUENCY", "SCHEDULE_WEEKDAY", "SCHEDULE_MONTHDAY", "SCHEDULE_TIME",
+        "NOTIFY_EMAIL", "NOTIFY_FROM", "NOTIFY_MODE", "MAIL_LANGUAGE"]
+
+agent.mset_env({k: env[k] for k in KEEP if k in env})

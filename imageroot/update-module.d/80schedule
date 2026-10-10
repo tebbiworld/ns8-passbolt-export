@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# The timer drop-in with the configured schedule is rewritten after every
+# update (the image re-extraction may reset the unit directory).
+
+import pbx
+
+pbx.apply_schedule()

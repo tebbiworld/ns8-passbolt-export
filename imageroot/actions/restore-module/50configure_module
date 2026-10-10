@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Re-apply the restored settings through configure-module, passing every
+# field. Secret fields stay empty: empty = keep the restored value.
+
+import base64
+import os
+
+import agent
+import agent.tasks
+
+env = os.environ
+data = {
+    "passbolt_url": env.get("PASSBOLT_URL", ""),
+    "passbolt_ca_pem": base64.b64decode(env.get("PASSBOLT_CA_B64", "")).decode("utf-8"),
+    "passbolt_private_key": "",
+    "passbolt_key_password": "",
+    "passbolt_totp_secret": "",
+    "clear_totp_secret": False,
+    "kdbx_password": "",
+    "keyfile_enabled": env.get("KEYFILE_ENABLED") == "true",
+    "kdbx_keyfile_secret": "",
+    "target_type": env.get("TARGET_TYPE", ""),
+    "target_path": env.get("TARGET_PATH", ""),
+    "target_token": "",
+    "pcloud_hostname": env.get("TARGET_PCLOUD_HOSTNAME", ""),
+    "s3_provider": env.get("TARGET_S3_PROVIDER", ""),
+    "s3_endpoint": env.get("TARGET_S3_ENDPOINT", ""),
+    "s3_region": env.get("TARGET_S3_REGION", ""),
+    "s3_access_key": "",
+    "s3_secret_access_key": "",
+    "webdav_url": env.get("TARGET_WEBDAV_URL", ""),
+    "webdav_vendor": env.get("TARGET_WEBDAV_VENDOR", ""),
+    "smb_host": env.get("TARGET_SMB_HOST", ""),
+    "smb_domain": env.get("TARGET_SMB_DOMAIN", ""),
+    "target_user": env.get("TARGET_USER", ""),
+    "target_password": "",
+    "file_prefix": env.get("FILE_PREFIX", "passbolt-export"),
+    "retention": int(env.get("RETENTION", "12")),
+    "schedule_enabled": env.get("SCHEDULE_ENABLED", "true") == "true",
+    "schedule_frequency": env.get("SCHEDULE_FREQUENCY", "weekly"),
+    "schedule_weekday": env.get("SCHEDULE_WEEKDAY", "Sun"),
+    "schedule_monthday": int(env.get("SCHEDULE_MONTHDAY", "1")),
+    "schedule_time": env.get("SCHEDULE_TIME", "03:30"),
+    "notify_email": env.get("NOTIFY_EMAIL", ""),
+    "notify_from": env.get("NOTIFY_FROM", ""),
+    "notify_mode": env.get("NOTIFY_MODE", "always"),
+    "mail_language": env.get("MAIL_LANGUAGE", "en"),
+}
+
+response = agent.tasks.run(agent_id=env["AGENT_ID"], action="configure-module", data=data)
+agent.assert_exp(response["exit_code"] == 0, "The configure-module subtask failed!")

@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Emergency sheet: the administrator who runs this task must confirm with
+# the password of their cluster account (re-authentication before a critical
+# operation). The password is checked the way the cluster-admin login does it,
+# with a Redis AUTH as that user on the leader. The sheet, including the
+# private key of the export account, then leaves the module only encrypted
+# with that password (PBKDF2-SHA256, AES-256-GCM): the NS8 agent keeps task
+# output in Redis for hours, so the clear text must never be part of it.
+# The browser decrypts it, prints it and forgets it.
+
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+
+import agent
+import pbx
+
+MAX_FAILURES = 5
+LOCK_SECONDS = 15 * 60
+
+request = json.load(sys.stdin)
+user = os.environ.get("AGENT_TASK_USER", "")
+attempts_path = os.path.join(pbx.state_dir(), ".sheet-attempts.json")
+
+
+def refuse(error):
+    agent.set_status("validation-failed")
+    json.dump([{"field": "admin_password", "parameter": "admin_password", "value": "", "error": error}], fp=sys.stdout)
+    sys.exit(3)
+
+
+def load_attempts():
+    try:
+        with open(attempts_path) as fp:
+            return json.load(fp)
+    except (FileNotFoundError, ValueError):
+        return {"failures": 0, "locked_until": 0}
+
+
+def save_attempts(data):
+    with open(attempts_path, "w") as fp:
+        json.dump(data, fp)
+
+
+attempts = load_attempts()
+if attempts.get("locked_until", 0) > time.time():
+    print(agent.SD_WARNING + f"emergency sheet refused for {user!r}: locked after repeated wrong passwords", file=sys.stderr)
+    refuse("sheet_locked")
+
+try:
+    if not user:
+        raise PermissionError("no user name in the task")
+    # AUTH on a connection of the read-only default user: it succeeds only
+    # with the right password of that cluster user (the same check as the
+    # cluster-admin login). Cluster users may not run PING, so no other
+    # command follows.
+    rdb = agent.redis_connect(socket_timeout=10)
+    rdb.execute_command("AUTH", user, request["admin_password"])  # raises on a wrong password
+    rdb.close()
+except Exception as exc:  # wrong password, unknown user or no connection: all refuse
+    attempts["failures"] = attempts.get("failures", 0) + 1
+    if attempts["failures"] >= MAX_FAILURES:
+        attempts = {"failures": 0, "locked_until": int(time.time()) + LOCK_SECONDS}
+    save_attempts(attempts)
+    print(agent.SD_WARNING + f"emergency sheet: password check for {user!r} failed ({type(exc).__name__})", file=sys.stderr)
+    refuse("admin_password_invalid")
+
+save_attempts({"failures": 0, "locked_until": 0})
+
+keyfile_xml = pbx.get_secret("keyfile")
+keyfile_hex = ""
+keyfile_hash = ""
+m = re.search(r'<Data Hash="([0-9A-Fa-f]{8})">([0-9A-Fa-f\s]+)</Data>', keyfile_xml)
+if m and os.environ.get("KEYFILE_ENABLED") == "true":
+    keyfile_hash = m.group(1).upper()
+    keyfile_hex = re.sub(r"\s", "", m.group(2)).upper()
+
+history = pbx.load_history()
+last_ok = next((r for r in history if r.get("ok")), None)
+sheet = {
+    "created": int(time.time()),
+    "module_id": os.environ.get("MODULE_ID", ""),
+    "passbolt_url": os.environ.get("PASSBOLT_URL", ""),
+    "passbolt_user": os.environ.get("PASSBOLT_USER", ""),
+    "passphrase": pbx.get_secret("passphrase"),
+    "totp_secret": pbx.get_secret("totp_secret"),
+    "private_key": pbx.get_secret("private_key"),
+    "kdbx_password": pbx.get_secret("kdbx_password"),
+    "keyfile_hex": keyfile_hex,
+    "keyfile_hash": keyfile_hash,
+    "target_type": os.environ.get("TARGET_TYPE", ""),
+    "target_path": os.environ.get("TARGET_PATH", ""),
+    "file_prefix": os.environ.get("FILE_PREFIX", "passbolt-export"),
+    "last_file": (last_ok or {}).get("file_name", ""),
+    "last_sha256": (last_ok or {}).get("sha256", ""),
+}
+
+fmt = request.get("format", "print")
+if fmt == "pdf":
+    labels = request.get("labels") or {}
+    target = os.environ.get("TARGET_TYPE", "")
+    where = (labels.get("target_" + target, target) + " · " + sheet["target_path"]) if target else "-"
+    engine_input = {"password": request["admin_password"], "labels": labels, "sheet": {
+        "created": time.strftime("%Y-%m-%d %H:%M"), "user": user, "module_id": sheet["module_id"],
+        "passbolt_url": sheet["passbolt_url"], "passbolt_user": sheet["passbolt_user"],
+        "passphrase": sheet["passphrase"], "totp_secret": sheet["totp_secret"],
+        "kdbx_password": sheet["kdbx_password"], "keyfile_hex": sheet["keyfile_hex"],
+        "keyfile_hash": sheet["keyfile_hash"], "where": where, "last_file": sheet["last_file"],
+        "last_sha256": sheet["last_sha256"]}}
+    command = "pdf"
+else:
+    engine_input = {"password": request["admin_password"], "plaintext": json.dumps(sheet)}
+    command = "seal"
+
+proc = subprocess.run(["podman", "run", "--rm", "-i", "--network=none", "--read-only", "--cap-drop=all",
+                       "--security-opt=no-new-privileges", "--log-driver=none",
+                       os.environ["PASSBOLT_EXPORT_APP_IMAGE"], command],
+                      input=json.dumps(engine_input), capture_output=True, text=True, timeout=300)
+del sheet, engine_input
+try:
+    sealed = json.loads(proc.stdout.strip().splitlines()[-1])
+except (ValueError, IndexError):
+    sealed = {"ok": False}
+agent.assert_exp(proc.returncode == 0 and sealed.get("ok"), "sealing the emergency sheet failed")
+
+print(agent.SD_NOTICE + f"emergency sheet ({fmt}) issued to {user!r}", file=sys.stderr)
+sealed.pop("ok", None)
+json.dump({"user": user, "format": fmt, "sealed": sealed}, fp=sys.stdout)

@@ -1,0 +1,23 @@
+{
+  "name": "Passbolt Export",
+  "description": {
+    "en": "Regular emergency copy of Passbolt as an encrypted KeePass file (KDBX 4) on Dropbox, OneDrive, Google Drive, pCloud, S3, WebDAV or SMB: open it with KeePassXC, Strongbox or KeePassDX when Passbolt or the whole server is gone",
+    "de": "Regelmäßige Notfallkopie von Passbolt als verschlüsselte KeePass-Datei (KDBX 4) in Dropbox, OneDrive, Google Drive, pCloud, S3, WebDAV oder SMB: mit KeePassXC, Strongbox oder KeePassDX lesbar, auch wenn Passbolt oder der ganze Server ausgefallen ist",
+    "it": "Copia di emergenza periodica di Passbolt come file KeePass cifrato (KDBX 4) su Dropbox, OneDrive, Google Drive, pCloud, S3, WebDAV o SMB: si apre con KeePassXC, Strongbox o KeePassDX quando Passbolt o l'intero server non sono disponibili",
+    "fr": "Copie de secours régulière de Passbolt sous forme de fichier KeePass chiffré (KDBX 4) sur Dropbox, OneDrive, Google Drive, pCloud, S3, WebDAV ou SMB : lisible avec KeePassXC, Strongbox ou KeePassDX quand Passbolt ou tout le serveur est hors service"
+  },
+  "categories": ["security", "storage"],
+  "authors": [
+    {
+      "name": "tebbiworld",
+      "email": "214554644+tebbiworld@users.noreply.github.com"
+    }
+  ],
+  "docs": {
+    "documentation_url": "https://github.com/tebbiworld/ns8-passbolt-export",
+    "bug_url": "https://github.com/tebbiworld/ns8-passbolt-export/issues",
+    "code_url": "https://github.com/tebbiworld/ns8-passbolt-export",
+    "relnotes_url": "https://github.com/tebbiworld/ns8-passbolt-export/releases"
+  },
+  "source": "ghcr.io/tebbiworld/passbolt-export"
+}
