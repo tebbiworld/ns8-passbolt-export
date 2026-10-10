@@ -113,6 +113,8 @@ shared folders; see the Guide page.
    the target, then press "Check connection" and "Export now" on the status
    page.
 
+Wiki: https://wiki.nethserver.org/doku.php?id=ns8:applications:passbolt-export
+
 Install from the Software Center (repository `tebbiworld`) or:
 
 ```

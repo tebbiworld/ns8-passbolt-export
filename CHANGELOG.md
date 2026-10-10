@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 — unreleased
+## 1.0.0 — 2026-10-10
 
 - First version: scheduled export of Passbolt into an encrypted KeePass file
   (KDBX 4, password and optional key file) with the Passbolt folder tree,

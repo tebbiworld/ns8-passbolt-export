@@ -55,4 +55,4 @@ api-cli run add-repository --data '{"name":"tebbiworld","url":"https://raw.githu
 - Is something missing in the emergency guide?
 
 Code and documentation: https://github.com/tebbiworld/ns8-passbolt-export
-Wiki: (link follows)
+Wiki: https://wiki.nethserver.org/doku.php?id=ns8:applications:passbolt-export
