@@ -6,12 +6,17 @@
 package main
 
 import (
+	"bytes"
+	"context"
+
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/pbkdf2"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -137,5 +142,28 @@ func TestSealRoundTrip(t *testing.T) {
 	}
 	if bad := seal(strings.NewReader(`{"password":"","plaintext":"x"}`)); bad.OK {
 		t.Fatal("empty password accepted")
+	}
+}
+
+func TestSheetPDFIsEncrypted(t *testing.T) {
+	req := `{"password":"Admin-Pw.42","sheet":{"kdbx_password":"Ab c0Ol1€","keyfile_hex":"000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F","keyfile_hash":"630DCD29","passphrase":"x","where":"WebDAV · Passbolt"},"labels":{"heading":"Notfallblatt: Prüfung"}}`
+	pdf, _, err := buildSheetPDF(strings.NewReader(req))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.HasPrefix(pdf, []byte("%PDF")) || !bytes.Contains(pdf, []byte("/Encrypt")) {
+		t.Fatal("not an encrypted PDF")
+	}
+	if bytes.Contains(pdf, []byte("0C0D0E0F")) || bytes.Contains(pdf, []byte("Notfallblatt")) {
+		t.Fatal("clear text in the PDF")
+	}
+	conf := model.NewDefaultConfiguration()
+	conf.UserPW = "Admin-Pw.42"
+	if err := api.Validate(context.Background(), bytes.NewReader(pdf), conf, nil); err != nil {
+		t.Fatalf("does not open with the password: %v", err)
+	}
+	conf.UserPW = "wrong"
+	if err := api.Validate(context.Background(), bytes.NewReader(pdf), conf, nil); err == nil {
+		t.Fatal("opens with a wrong password")
 	}
 }

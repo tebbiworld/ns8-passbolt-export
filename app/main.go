@@ -19,6 +19,7 @@
 //	run     export, verify the written file by decrypting it again, upload it
 //	        and prune old copies beyond the retention count
 //	seal    encrypt the emergency sheet for the browser with the admin password
+//	pdf     the emergency sheet as AES-256 encrypted PDF, sealed the same way
 package main
 
 import (
@@ -85,12 +86,15 @@ type Result struct {
 func main() {
 	res := Result{}
 	if len(os.Args) != 2 {
-		res.Error = "usage: pbexport check|run|seal < input.json"
+		res.Error = "usage: pbexport check|run|seal|pdf < input.json"
 		finish(&res, 2)
 	}
 	res.Command = os.Args[1]
-	if res.Command == "seal" {
+	switch res.Command {
+	case "seal":
 		runSeal()
+	case "pdf":
+		runPDF()
 	}
 
 	cfg, err := readConfig(os.Stdin)

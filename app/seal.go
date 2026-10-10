@@ -79,8 +79,10 @@ func seal(r io.Reader) sealed {
 	return sealed{OK: true, KDF: "PBKDF2-SHA256", Iterations: sealIterations, Salt: b64(salt), Nonce: b64(nonce), Ciphertext: b64(ct)}
 }
 
-func runSeal() {
-	out := seal(os.Stdin)
+func runSeal() { runSealFrom(os.Stdin) }
+
+func runSealFrom(r io.Reader) {
+	out := seal(r)
 	_ = json.NewEncoder(os.Stdout).Encode(out)
 	if !out.OK {
 		os.Exit(1)
