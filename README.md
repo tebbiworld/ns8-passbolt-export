@@ -130,8 +130,18 @@ add-module ghcr.io/tebbiworld/passbolt-export:1.0.0 1
 | Credentials of the upload target (OAuth token, keys, obscured password) | `state/rclone/rclone.conf` (0600; rclone renews tokens there) |
 | Run history | `state/runs.json` |
 
-All four are in the module backup (`imageroot/etc/state-include.conf`) and are
-protected by the encryption of the NS8 backup repository. Secret input fields
+The settings, the target login and the run history are in the module backup
+(`imageroot/etc/state-include.conf`), protected by the encryption of the NS8
+backup repository. `state/passwords.env` is deliberately left out: with it,
+whoever obtains the backup repository password could read everything the
+export account can read. This departs from the usual NS8 pattern, which backs
+up `passwords.env` because it holds secrets generated at install time that the
+restored data depends on; here it holds credentials the administrator typed
+in, and the restore works without them. After a restore the status page lists
+what is missing (Passbolt account, KeePass password, key file) and the export
+refuses to run until they are entered again; an enabled key file option stays
+enabled. A clone copies the whole state directory and keeps the secrets.
+Secret input fields
 are named so that the NS8 agent blanks them in the task context it keeps in
 Redis (names ending in `password`, `secret`, `token` or `key`).
 

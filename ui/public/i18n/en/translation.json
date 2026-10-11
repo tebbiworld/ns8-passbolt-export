@@ -278,7 +278,7 @@
     "account_4": "Share your top-level folders with this account with the permission \"can read\". Items that are later created in or moved into a shared folder through the Passbolt web interface are shared with it as well.",
     "account_5": "Personal items that are not in a shared folder are not exported. Move them into a folder (for example \"Private\") shared read-only with the export account.",
     "account_6": "Enter address, recovery kit, passphrase and TOTP secret in the settings, save, then press \"Check connection\" on the status page. The number of entries must match your expectation.",
-    "account_risk": "The module stores the private key, passphrase and TOTP secret of this account in its secrets (file readable only by the module, included in the encrypted NS8 backup). Whoever controls this server can read everything the account can read. That is the price of an automatic export; keep the account read-only.",
+    "account_risk": "The module stores the private key, passphrase and TOTP secret of this account in its secrets (file readable only by the module, not included in the NS8 backup: after restoring this module from a backup, enter them again). Whoever controls this server can read everything the account can read. That is the price of an automatic export; keep the account read-only.",
     "target_title": "Connecting a cloud service",
     "target_help": "Dropbox, OneDrive, Google Drive and pCloud are connected with a token that rclone creates on your own computer after you log in to the service in your browser:",
     "target_1": "Install rclone from rclone.org/downloads (a single program, no setup needed).",

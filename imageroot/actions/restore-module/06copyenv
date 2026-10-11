@@ -5,8 +5,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-# Copy the plain settings of the original instance. The secrets come back with
-# the restored state/passwords.env and state/rclone/rclone.conf.
+# Copy the plain settings of the original instance. The login of the upload
+# target comes back with state/rclone/rclone.conf. state/passwords.env is not
+# in the backup (see etc/state-include.conf): after a restore the Passbolt
+# account and the KeePass password must be entered again. A clone copies the
+# whole state directory and keeps them.
 
 import json
 import sys
