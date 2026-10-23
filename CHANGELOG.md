@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — 2026-10-11
 
 - The module backup no longer contains `state/passwords.env` (private key,
   passphrase and TOTP secret of the export account, KeePass password, key
