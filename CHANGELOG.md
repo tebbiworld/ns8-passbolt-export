@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1 — 2026-11-23
+
+- rclone 1.75.2, go-passbolt v0.8.3 → rclone 1.76.0, go-passbolt v0.8.4 (automatic upstream update).
+
 ## 1.1.0 — 2026-10-11
 
 - The module backup no longer contains `state/passwords.env` (private key,
